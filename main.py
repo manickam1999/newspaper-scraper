@@ -1,5 +1,10 @@
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import logging
 import os
+import smtplib
 import tempfile
 import requests
 import yaml
@@ -10,6 +15,14 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from PIL import Image
+
+from src.drive import (
+    find_or_create_folder,
+    get_google_drive_service,
+    set_file_permissions,
+    upload_to_drive,
+)
+from src.email import send_email
 
 
 def create_custom_logger():
@@ -45,12 +58,12 @@ def is_latest(driver, url, version, logger):
     date = driver.find_element(By.ID, "vc_edition_calendar_1").get_attribute("value")
     if date == version:
         logger.info("The latest version is already downloaded")
-        return True
+        return True, date
     logger.info("The latest version is not downloaded")
     return False, date
 
 
-def login(driver, url, username, password, logger):
+def login(driver, username, password, logger):
     # Login Button
     logger.info("Finding for login button")
     login_button = driver.find_element(By.CSS_SELECTOR, "a.vc_open_login.vc_nav_link")
@@ -155,8 +168,8 @@ def create_pdf_from_images(temp_dir, output_file, total_pages, logger):
             logger.info(f"Added page {page} to images list")
         else:
             logger.warning(f"Image for page {page} not found")
-
     if len(images) > 0:
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
         try:
             with Image.open(images[0]) as first_image:
                 first_image.save(
@@ -189,10 +202,21 @@ def main():
     driver = webdriver.Chrome(service=Service(), options=webdriver.ChromeOptions())
 
     try:
+        # edge config
         edge_config = config.get("edge")
         url = edge_config.get("url")
         username = edge_config.get("username")
         password = edge_config.get("password")
+
+        # email
+        email_config = config.get("email", {})
+        sender_email = email_config.get("sender_email")
+        sender_password = email_config.get("sender_password")
+        receiver_emails = email_config.get("receiver_emails", [])
+        service_account_file = config.get("google_drive", {}).get(
+            "service_account_file"
+        )
+        folder_name = config.get("google_drive", {}).get("folder_name")
 
         version = checkpoint.get("version")
 
@@ -201,7 +225,7 @@ def main():
         if latest:
             input("Press Enter to close the browser...")
             return
-        output_dir = edge_config.get("output_dir", os.getcwd())
+
         login(driver, username, password, logger)
         enable_workstation(driver, logger)
         total_pages = get_total_pages(driver, logger)
@@ -211,20 +235,49 @@ def main():
         for cookie in driver.get_cookies():
             session.cookies.set(cookie["name"], cookie["value"])
 
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        output_file = os.path.join(script_dir, "edge_magazine.pdf")
         with tempfile.TemporaryDirectory() as temp_dir:
             logger.info(f"Created temporary directory: {temp_dir}")
             fetch_images(session, zoom_url, total_pages, temp_dir, logger)
-            output_file = os.path.join(output_dir, "edge_magazine.pdf")
+            file_name = f"Edge Magazine - {date}.pdf"
+            output_file = os.path.join(temp_dir, file_name)
             create_pdf_from_images(temp_dir, output_file, total_pages, logger)
 
-        logger.info(f"PDF has been saved in {output_file}")
-        logger.info("Temporary directory has been automatically removed")
+            try:
+                drive_service = get_google_drive_service(service_account_file)
+                folder_id = find_or_create_folder(drive_service, folder_name)
+                file_id, drive_link = upload_to_drive(
+                    drive_service, output_file, file_name, folder_id
+                )
+            except Exception as e:
+                logger.error(
+                    f"Failed to upload to Google Drive or set permissions: {str(e)}"
+                )
+                raise e
+
+        set_file_permissions(drive_service, file_id, receiver_emails)
+        subject = email_config.get("subject", f"Edge Magazine PDF - {date}")
+        body = (
+            email_config.get(
+                "body", "Please find the link to the latest Edge Magazine PDF below:"
+            )
+            + f"\n\n{drive_link}"
+        )
+
+        if sender_email and sender_password and receiver_emails:
+            if send_email(
+                sender_email, sender_password, receiver_emails, subject, body
+            ):
+                print("Email sent successfully with Google Drive link")
+            else:
+                print("Failed to send email")
+        else:
+            print("Email configuration is incomplete. Skipping email sending.")
+
         checkpoint["version"] = date
         with open("checkpoint.yaml", "w") as file:
             yaml.dump(checkpoint, file)
         logger.info("Checkpoint has been updated with f{date}")
+
         input("Press Enter to close the browser...")
 
     finally:
