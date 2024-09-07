@@ -2,7 +2,22 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-from utils import logger
+from utils.logger import logger
+
+
+def handle_drive_upload(config, file_path, file_name):
+
+    drive_config = config.get("google_drive", {})
+    service_account_file = drive_config.get("service_account_file")
+    folder_name = drive_config.get("folder_name")
+
+    drive_service = get_google_drive_service(service_account_file)
+    folder_id = find_or_create_folder(drive_service, folder_name)
+    file_id, drive_link = upload_to_drive(
+        drive_service, file_path, file_name, folder_id
+    )
+
+    return drive_service, file_id, drive_link
 
 
 def get_google_drive_service(service_account_file):

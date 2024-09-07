@@ -2,7 +2,25 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from googleapiclient.discovery import build
-from utils import logger
+from utils.logger import logger
+
+
+def handle_email(config, drive_link, date):
+    email_config = config["email"]
+    sender_email = email_config["sender_email"]
+    sender_password = email_config["sender_password"]
+    receiver_emails = email_config["receiver_emails"]
+    subject = email_config.get("subject", f"Edge Magazine PDF - {date}")
+    body = (
+        email_config.get(
+            "body", "Please find the link to the latest Edge Magazine PDF below:"
+        )
+        + f"\n\n{drive_link}"
+    )
+
+    if sender_email and sender_password and receiver_emails:
+        return send_email(sender_email, sender_password, receiver_emails, subject, body)
+    return False
 
 
 def send_email(sender_email, sender_password, receiver_emails, subject, body):

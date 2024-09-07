@@ -1,5 +1,6 @@
 import logging
 
+
 def create_custom_logger():
     logger = logging.getLogger("edge-converter")
     logger.setLevel(logging.INFO)
@@ -20,5 +21,6 @@ def create_custom_logger():
     logger.addHandler(file_handler)
 
     return logger
+
 
 logger = create_custom_logger()
