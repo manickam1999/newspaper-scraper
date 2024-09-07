@@ -1,4 +1,4 @@
-# Edge Magazine Scraper
+# Edge Weekly Scraper
 
 This project is an automated scraper for The Edge Weekly Newspaper. It logs in to the Edge Weekly website, downloads the latest issue, converts it to a PDF, uploads it to Google Drive, and sends email notifications with the download link.
 
