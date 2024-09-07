@@ -1,10 +1,4 @@
-from email import encoders
-from email.mime.base import MIMEBase
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-import logging
 import os
-import smtplib
 import tempfile
 import requests
 import yaml
@@ -23,28 +17,7 @@ from src.drive import (
     upload_to_drive,
 )
 from src.email import send_email
-
-
-def create_custom_logger():
-    logger = logging.getLogger("edge-converter")
-    logger.setLevel(logging.INFO)
-
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-
-    file_handler = logging.FileHandler("edge_converter.log")
-    file_handler.setLevel(logging.INFO)
-
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
-    console_handler.setFormatter(formatter)
-    file_handler.setFormatter(formatter)
-
-    logger.addHandler(console_handler)
-    logger.addHandler(file_handler)
-
-    return logger
+from utils import logger
 
 
 def load_config(file):
@@ -52,7 +25,7 @@ def load_config(file):
         return yaml.safe_load(file)
 
 
-def is_latest(driver, url, version, logger):
+def is_latest(driver, url, version):
     driver.get(url)
     logger.info("Finding the latest date")
     date = driver.find_element(By.ID, "vc_edition_calendar_1").get_attribute("value")
@@ -63,7 +36,7 @@ def is_latest(driver, url, version, logger):
     return False, date
 
 
-def login(driver, username, password, logger):
+def login(driver, username, password):
     # Login Button
     logger.info("Finding for login button")
     login_button = driver.find_element(By.CSS_SELECTOR, "a.vc_open_login.vc_nav_link")
@@ -98,7 +71,7 @@ def login(driver, username, password, logger):
     logger.info("Latest paper link clicked")
 
 
-def enable_workstation(driver, logger):
+def enable_workstation(driver):
     click_counter = 0
     while True:
         try:
@@ -120,20 +93,20 @@ def enable_workstation(driver, logger):
             break
 
 
-def get_total_pages(driver, logger):
+def get_total_pages(driver):
     total_pages = driver.find_element(By.CSS_SELECTOR, "i.vc_icon.fa.totalPages").text
     logger.info(f"Total pages: {total_pages}")
     return int(total_pages)
 
 
-def get_zoom_url(driver, logger):
+def get_zoom_url(driver):
     for request in driver.requests:
         if "Zoom-1" in request.url:
             logger.info(f"Zoom URL: {request.url}")
             return request.url
 
 
-def fetch_images(session, zoom_url, total_pages, temp_dir, logger):
+def fetch_images(session, zoom_url, total_pages, temp_dir):
     base_url = zoom_url.rsplit("Zoom-", 1)[0]
 
     for page in range(1, total_pages + 1):
@@ -159,7 +132,7 @@ def fetch_images(session, zoom_url, total_pages, temp_dir, logger):
     logger.info(f"All images have been fetched and saved in {temp_dir}")
 
 
-def create_pdf_from_images(temp_dir, output_file, total_pages, logger):
+def create_pdf_from_images(temp_dir, output_file, total_pages):
     images = []
     for page in range(1, total_pages + 1):
         image_path = os.path.join(temp_dir, f"page_{page}.jpg")
@@ -187,7 +160,6 @@ def create_pdf_from_images(temp_dir, output_file, total_pages, logger):
 
 
 def main():
-    logger = create_custom_logger()
     config = load_config("config.yaml")
     checkpoint_file = "checkpoint.yaml"
     if os.path.exists(checkpoint_file):
@@ -220,16 +192,16 @@ def main():
 
         version = checkpoint.get("version")
 
-        latest, date = is_latest(driver, url, version, logger)
+        latest, date = is_latest(driver, url, version)
 
         if latest:
-            input("Press Enter to close the browser...")
+            logger.info("Exiting script as the latest version is already published")
             return
 
-        login(driver, username, password, logger)
-        enable_workstation(driver, logger)
-        total_pages = get_total_pages(driver, logger)
-        zoom_url = get_zoom_url(driver, logger)
+        login(driver, username, password)
+        enable_workstation(driver)
+        total_pages = get_total_pages(driver)
+        zoom_url = get_zoom_url(driver)
 
         session = requests.Session()
         for cookie in driver.get_cookies():
@@ -237,10 +209,10 @@ def main():
 
         with tempfile.TemporaryDirectory() as temp_dir:
             logger.info(f"Created temporary directory: {temp_dir}")
-            fetch_images(session, zoom_url, total_pages, temp_dir, logger)
+            fetch_images(session, zoom_url, total_pages, temp_dir)
             file_name = f"Edge Magazine - {date}.pdf"
             output_file = os.path.join(temp_dir, file_name)
-            create_pdf_from_images(temp_dir, output_file, total_pages, logger)
+            create_pdf_from_images(temp_dir, output_file, total_pages)
 
             try:
                 drive_service = get_google_drive_service(service_account_file)
@@ -281,8 +253,7 @@ def main():
         input("Press Enter to close the browser...")
 
     finally:
-        # driver.quit()
-        pass
+        driver.quit()
 
 
 if __name__ == "__main__":
