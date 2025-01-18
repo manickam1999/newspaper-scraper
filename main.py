@@ -9,6 +9,7 @@ from src.scraper import scrape_magazine, setup_driver
 from utils.logger import logger
 from utils.checkpoint import load_checkpoint, save_checkpoint
 from utils.config import load_config
+import ocrmypdf
 
 
 def main():
@@ -23,6 +24,16 @@ def main():
         output_file, date, file_name = scrape_magazine(
             driver, config, checkpoint, temp_dir
         )
+        
+        input_file = output_file
+        output_file = input_file.replace(".pdf", "_ocr.pdf")
+        
+        ocrmypdf.ocr(
+            input_file=input_file,
+            output_file=output_file,
+            language='eng',
+        )
+        
         if not output_file:
             return
 
