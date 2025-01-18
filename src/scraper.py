@@ -1,5 +1,5 @@
+from datetime import datetime
 import os
-import requests
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -35,18 +35,13 @@ def scrape_magazine(driver, config, checkpoint, temp_dir):
     if latest:
         logger.info("Exiting script as the latest version is already published")
         return None, None, None
-
+    formatted_date = datetime.strptime(date, "%d/%m/%Y").strftime("%Y%m%d")
     login(driver, username, password)
-    enable_workstation(driver)
     total_pages = get_total_pages(driver)
     zoom_url = get_zoom_url(driver)
 
-    session = requests.Session()
-    for cookie in driver.get_cookies():
-        session.cookies.set(cookie["name"], cookie["value"])
-
     logger.info(f"Using temporary directory: {temp_dir}")
-    fetch_images(session, zoom_url, total_pages, temp_dir)
+    fetch_images(zoom_url, total_pages, temp_dir, formatted_date)
     file_name = f"Edge Magazine - {date}.pdf"
     output_file = os.path.join(temp_dir, file_name)
     create_pdf_from_images(temp_dir, output_file, total_pages)

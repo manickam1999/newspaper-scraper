@@ -14,9 +14,13 @@ def fetch_images(session, zoom_url, total_pages, temp_dir):
         logger.info(
             f"Fetching image {page} of {total_pages} ({progress:.2f}% complete)"
         )
+        headers = {
+        "Referer": "https://digital.theedgemalaysia.com/theedgemediagroup/pageflip/swipe/tem/{formatted_date}tem#/{page}/",
+        "Cookie": cookie_string
+        }
 
         try:
-            response = session.get(image_url)
+            response = requests.get(image_url, headers=headers)
             response.raise_for_status()
 
             image_path = os.path.join(temp_dir, f"page_{page}.jpg")
