@@ -26,7 +26,7 @@ def setup_driver():
     return driver
 
 
-def scrape_magazine(driver, config, checkpoint, temp_dir):
+def scrape_magazine(driver, config, checkpoint, temp_dir, cookie=None):
     edge_config = config["edge"]
     url, username, password = edge_config["url"], edge_config["username"], edge_config["password"]
 
@@ -40,7 +40,7 @@ def scrape_magazine(driver, config, checkpoint, temp_dir):
     zoom_url = get_zoom_url(driver)
 
     logger.info(f"Using temporary directory: {temp_dir}")
-    fetch_images(zoom_url, total_pages, temp_dir, formatted_date)
+    fetch_images(zoom_url, total_pages, temp_dir, formatted_date, cookie)
     file_name = f"Edge Magazine - {date}.pdf"
     output_file = os.path.join(temp_dir, file_name)
     create_pdf_from_images(temp_dir, output_file, total_pages)

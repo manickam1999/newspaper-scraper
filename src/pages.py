@@ -4,8 +4,6 @@ from PIL import Image
 from utils.logger import logger
 
 def fetch_images(zoom_url, total_pages, temp_dir, formatted_date, cookie=None):
-    
-    cookie_string="vn=7FYPt42dJ8Q%3D; extvn=bNhDAnhWzF8%3D; JSESSIONID=AC985C97CABBA9CA2C07A5A502E48172; _ga=GA1.1.704106634.1733365408; visid_incap_3130433=i5/HSResTpyrilZ++sg5YEUoVmcAAAAAQUIPAAAAAABlB47Riyaznltg47rQ9HOg; workstationCookie=1733699655492; vuidjson=FsQ10ex63%2FBh3DR2OYEuhGEt4ycDJC2YWCajSJDPU351CkuZRnltUrIcwBcd67l39t9w8vx%2B4CM%3D; _gcl_au=1.1.386170537.1741400656; nlbi_3130433=Yc31OMd3tVp4jCnTkANNcgAAAAAEc5kSm1VcRG6c3hiLuFKN; incap_ses_1139_3130433=B68YR7ucHAuWTzJRuIrOD4MX2mcAAAAAx5H1o8Fj1MeIZz0xd77dCA==; _ga_KESNC53HMR=GS1.1.1742346116.27.1.1742346123.53.0.1239023175"
 
     base_url = zoom_url.rsplit("Zoom-", 1)[0]
 
@@ -16,9 +14,11 @@ def fetch_images(zoom_url, total_pages, temp_dir, formatted_date, cookie=None):
             f"Fetching image {page} of {total_pages} ({progress:.2f}% complete)"
         )
         headers = {
-        "Referer": "https://digital.theedgemalaysia.com/theedgemediagroup/pageflip/swipe/tem/{formatted_date}tem#/{page}/",
-        "Cookie": cookie_string
+            "Referer": f"https://digital.theedgemalaysia.com/theedgemediagroup/pageflip/swipe/tem/{formatted_date}tem#/{page}/"
         }
+        
+        if cookie:
+            headers["Cookie"] = cookie
 
         try:
             response = requests.get(image_url, headers=headers)

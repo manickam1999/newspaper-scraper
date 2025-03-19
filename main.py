@@ -1,3 +1,4 @@
+import argparse
 import os
 import tempfile
 from src.drive import (
@@ -13,8 +14,14 @@ import ocrmypdf
 
 
 def main():
+    parser = argparse.ArgumentParser(description='Edge Magazine Converter')
+    parser.add_argument('--cookie', help='Cookie string for authentication')
+    args = parser.parse_args()
+    
     config = load_config("config/config.yaml")
     checkpoint = load_checkpoint()
+
+    cookie = args.cookie if args.cookie else config.get("edge", {}).get("cookie")
 
     driver = setup_driver()
 
@@ -22,7 +29,7 @@ def main():
         logger.info(f"Created temporary directory: {temp_dir}")
 
         output_file, date, file_name = scrape_magazine(
-            driver, config, checkpoint, temp_dir
+            driver, config, checkpoint, temp_dir, cookie
         )
         
         input_file = output_file
