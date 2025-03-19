@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     ghostscript \
     libmagic1 \
     poppler-utils \
+    cron \
     && rm -rf /var/lib/apt/lists/*
 
 # Set environment variables for Chrome
@@ -36,5 +37,11 @@ RUN mkdir -p /app/config /app/credentials /app/checkpoint
 # Set volume mount points
 VOLUME ["/app/config", "/app/credentials", "/app/checkpoint"]
 
-# Run the application
-CMD ["python", "main.py"]
+# Make run script executable
+RUN chmod +x run.sh
+
+# Create log file for cron
+RUN touch /var/log/cron.log
+
+# Run the script
+CMD ["/app/run.sh"]

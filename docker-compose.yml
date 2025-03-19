@@ -7,6 +7,9 @@ services:
       - ./config:/app/config
       - ./credentials:/app/credentials
       - ./checkpoint:/app/checkpoint
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     environment:
       - PYTHONUNBUFFERED=1
-    restart: "no"
+      - TZ=Asia/Kuala_Lumpur
+    restart: always
