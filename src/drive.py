@@ -5,19 +5,26 @@ from googleapiclient.http import MediaFileUpload
 from utils.logger import logger
 
 
-def handle_drive_upload(config, file_path, file_name):
-
+def handle_drive_upload(config, file_path, file_name, is_star=False, date=None):
     drive_config = config.get("google_drive", {})
     service_account_file = drive_config.get("service_account_file")
-    folder_name = drive_config.get("folder_name")
+
+    folder_name = drive_config.get("star_folder" if is_star else "edge_folder")
 
     drive_service = get_google_drive_service(service_account_file)
-    folder_id = find_or_create_folder(drive_service, folder_name)
+    root_folder_id = find_or_create_folder(drive_service, folder_name)
+    
+    if is_star and date:
+        folder_id = find_or_create_folder(drive_service, date, root_folder_id)
+    else:
+        folder_id = root_folder_id
+        
     file_id, drive_link = upload_to_drive(
         drive_service, file_path, file_name, folder_id
     )
 
-    return drive_service, file_id, drive_link
+    # Return folder_id for Star files to set permissions on the folder
+    return drive_service, file_id, drive_link, folder_id if is_star else None
 
 
 def get_google_drive_service(service_account_file):
