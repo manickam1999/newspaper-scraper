@@ -1,11 +1,10 @@
 import os
 import requests
 from PIL import Image
-
 from utils.logger import logger
 
+def fetch_images(zoom_url, total_pages, temp_dir, formatted_date, cookie=None):
 
-def fetch_images(session, zoom_url, total_pages, temp_dir):
     base_url = zoom_url.rsplit("Zoom-", 1)[0]
 
     for page in range(1, total_pages + 1):
@@ -15,9 +14,11 @@ def fetch_images(session, zoom_url, total_pages, temp_dir):
             f"Fetching image {page} of {total_pages} ({progress:.2f}% complete)"
         )
         headers = {
-        "Referer": "https://digital.theedgemalaysia.com/theedgemediagroup/pageflip/swipe/tem/{formatted_date}tem#/{page}/",
-        "Cookie": cookie_string
+            "Referer": f"https://digital.theedgemalaysia.com/theedgemediagroup/pageflip/swipe/tem/{formatted_date}tem#/{page}/"
         }
+        
+        if cookie:
+            headers["Cookie"] = cookie
 
         try:
             response = requests.get(image_url, headers=headers)
