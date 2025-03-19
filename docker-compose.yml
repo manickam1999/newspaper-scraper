@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  edge-converter:
+    build: .
+    volumes:
+      - ./config:/app/config
+      - ./credentials:/app/credentials
+      - ./checkpoint:/app/checkpoint
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: "no"

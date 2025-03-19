@@ -13,7 +13,7 @@ import ocrmypdf
 
 
 def main():
-    config = load_config("config.yaml")
+    config = load_config("config/config.yaml")
     checkpoint = load_checkpoint()
 
     driver = setup_driver()

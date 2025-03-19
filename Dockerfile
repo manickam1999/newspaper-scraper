@@ -1,21 +1,40 @@
+FROM python:3.9-slim
 
-FROM selenium/standalone-chrome
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    chromium \
+    chromium-driver \
+    ghostscript \
+    libmagic1 \
+    poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
 
-USER root
+# Set environment variables for Chrome
+ENV CHROME_BIN=/usr/bin/chromium
+ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
+ENV SELENIUM_HEADLESS=1
+ENV PYTHONUNBUFFERED=1
 
-RUN apt-get update && apt-get install -y python3-venv python3-pip
+# Create and set working directory
+WORKDIR /app
 
-WORKDIR /usr/src/app
-
-RUN python3 -m venv venv
+# Copy requirements first to leverage Docker cache
 COPY requirements.txt .
-RUN ./venv/bin/pip install --no-cache-dir -r requirements.txt
 
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir ocrmypdf
+
+# Copy application code
 COPY . .
 
-ENV CHROME_BIN=/opt/google/chrome/chrome
-ENV CHROME_DRIVER=/usr/bin/chromedriver
+# Create directories for mounted volumes
+RUN mkdir -p /app/config /app/credentials /app/checkpoint
 
-ENV PATH="/usr/src/app/venv/bin:$PATH"
+# Set volume mount points
+VOLUME ["/app/config", "/app/credentials", "/app/checkpoint"]
 
+# Run the application
 CMD ["python", "main.py"]
