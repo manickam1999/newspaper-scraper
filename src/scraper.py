@@ -30,7 +30,7 @@ def scrape_magazine(driver, config, checkpoint, temp_dir, cookie=None):
     edge_config = config["edge"]
     url, username, password = edge_config["url"], edge_config["username"], edge_config["password"]
 
-    latest, date = is_latest(driver, url, checkpoint["version"])
+    latest, date = is_latest(driver, url, checkpoint["edge"]["version"])
     if latest:
         logger.info("Exiting script as the latest version is already published")
         return None, None, None
