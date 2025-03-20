@@ -122,36 +122,6 @@ email:
   body: "Please find the link to the latest newspaper PDF below:"
 ```
 
-### Using Environment Variables
-
-You can also use environment variables by creating a `.env` file:
-
-```env
-MODE=both  # Options: edge, star, both
-
-# Edge Weekly Configuration
-EDGE_URL=https://digital.theedgemalaysia.com/
-EDGE_USERNAME=your_username
-EDGE_PASSWORD=your_password
-EDGE_COOKIE=your_auth_cookie
-
-# The Star Configuration
-STAR_URL=https://newsstand.thestar.com.my/
-STAR_USERNAME=your_username
-STAR_PASSWORD=your_password
-STAR_COOKIE=your_auth_cookie
-
-# Google Drive Configuration
-GOOGLE_DRIVE_SERVICE_ACCOUNT_FILE=path/to/your/service_account.json
-GOOGLE_DRIVE_FOLDER_NAME=newspapers
-
-# Email Configuration
-EMAIL_SENDER=your_email@gmail.com
-EMAIL_PASSWORD=your_app_password
-EMAIL_RECIPIENTS=recipient1@example.com,recipient2@example.com
-EMAIL_SUBJECT=Weekly Newspaper PDF
-```
-
 ## Usage
 
 ### Running with Python
@@ -163,7 +133,6 @@ EMAIL_SUBJECT=Weekly Newspaper PDF
 # Or directly with Python
 python main.py --mode edge  # For Edge Weekly only
 python main.py --mode star  # For The Star only
-python main.py --mode both  # For both newspapers
 ```
 
 ### Running with Docker
