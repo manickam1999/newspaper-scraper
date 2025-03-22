@@ -90,7 +90,7 @@ def main():
                 return
 
             if os.path.exists(output_file):
-                drive_service, file_id, drive_link = handle_drive_upload(
+                drive_service, file_id, drive_link, _ = handle_drive_upload(
                     config, output_file, file_name, is_star=False
                 )
                 set_file_permissions(
