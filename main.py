@@ -1,4 +1,5 @@
 import argparse
+from datetime import datetime
 import os
 import tempfile
 from src.drive import (
@@ -8,6 +9,7 @@ from src.drive import (
 from src.email import handle_email
 from src.scraper import scrape_magazine, setup_driver
 from src.star.scraper import scrape_the_star
+from src.sun.scraper import scrape_the_sun
 from utils.logger import logger
 from utils.checkpoint import load_checkpoint, save_checkpoint
 from utils.config import load_config
@@ -30,6 +32,35 @@ def main():
 
     with tempfile.TemporaryDirectory() as temp_dir:
         logger.info(f"Created temporary directory: {temp_dir}")
+        if mode == 'sun':
+            output_file, date, file_name = scrape_the_sun(driver, config, checkpoint, temp_dir)
+            # input_file = output_file
+            # output_file = input_file.replace(".pdf", "_ocr.pdf")
+            
+            # ocrmypdf.ocr(
+            #     input_file=input_file,
+            #     output_file=output_file,
+            #     language='eng',
+            #     force_ocr=True,
+            # )
+            
+            # if not output_file:
+            #     return
+
+            if os.path.exists(output_file):
+                drive_service, file_id, drive_link, _ = handle_drive_upload(
+                    config, output_file, file_name, mode="sun"
+                )
+                set_file_permissions(
+                    drive_service, file_id, config["email"]["receiver_emails"]
+                )
+
+                handle_email(config, drive_link, date, mode="sun")
+
+                checkpoint["sun"]["version"] = date
+                save_checkpoint(checkpoint)
+            else:
+                logger.error(f"Output file not found: {output_file}")
         if mode == 'star':
             output_files, date, file_name = scrape_the_star(driver, config, checkpoint, temp_dir)
             drive_links = []
@@ -52,7 +83,7 @@ def main():
 
                 if os.path.exists(ocr_output):
                     drive_service, file_id, drive_link, new_folder_id = handle_drive_upload(
-                        config, ocr_output, current_file_name, is_star=True, date=date
+                        config, ocr_output, current_file_name, mode="star", date=date
                     )
                     folder_id = new_folder_id
                     if file_id and drive_link:
@@ -68,7 +99,7 @@ def main():
                 
                 all_links = "\n".join(drive_links)
                 
-                handle_email(config, all_links, date, is_star=True)
+                handle_email(config, all_links, date, mode='star')
                 checkpoint["the_star"]["version"] = date
                 save_checkpoint(checkpoint)
         
@@ -91,18 +122,19 @@ def main():
 
             if os.path.exists(output_file):
                 drive_service, file_id, drive_link, _ = handle_drive_upload(
-                    config, output_file, file_name, is_star=False
+                    config, output_file, file_name, mode="edge"
                 )
                 set_file_permissions(
                     drive_service, file_id, config["email"]["receiver_emails"]
                 )
 
-                handle_email(config, drive_link, date, is_star=False)
+                handle_email(config, drive_link, date, mode="edge")
 
                 checkpoint["edge"]["version"] = date
                 save_checkpoint(checkpoint)
             else:
                 logger.error(f"Output file not found: {output_file}")
+    driver.quit()
 
 if __name__ == "__main__":
     main()

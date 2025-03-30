@@ -5,16 +5,19 @@ from googleapiclient.discovery import build
 from utils.logger import logger
 
 
-def handle_email(config, drive_link, date, is_star=False):
+def handle_email(config, drive_link, date, mode="edge"):
     email_config = config["email"]
     sender_email = email_config["sender_email"]
     sender_password = email_config["sender_password"]
     receiver_emails = email_config["receiver_emails"]
     
-    if is_star:
+    if mode=="star":
         subject = f"The Star Newspaper PDFs - {date}"
         body = f"Please find the link to today's Star newspaper PDFs below:\n\n{drive_link}"
-    else:
+    elif mode=="sun":
+        subject = f"The Sun PDF - {date}"
+        body = f"Please find the link to the latest The Sun Newspaper PDF below:\n\n{drive_link}"
+    elif mode=="edge":
         subject = email_config.get("subject", f"Edge Magazine PDF - {date}")
         body = (
             email_config.get(
