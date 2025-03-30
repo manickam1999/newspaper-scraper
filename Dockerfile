@@ -25,3 +25,9 @@ COPY . .
 
 # Set volume mount points
 VOLUME ["/app/config", "/app/credentials", "/app/checkpoint"]
+
+# Make setup script executable
+RUN chmod +x scripts/setup-cron.sh
+
+# Set entrypoint
+ENTRYPOINT ["./scripts/setup-cron.sh"]
