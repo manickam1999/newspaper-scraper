@@ -7,28 +7,35 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from src.pages import create_pdf_from_images, fetch_images
 from utils.logger import logger
 from seleniumwire import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options
+
 
 def setup_driver():
     chrome_options = Options()
-    chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1920x1080")
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--start-maximized")
-    
-    driver = webdriver.Chrome(
-        service=ChromeService(), options=chrome_options
+
+    capabilities = {"browserName": "chrome", "platformName": "linux"}
+
+    selenium_host = os.environ.get("SELENIUM_HOST", "127.0.0.1")
+    driver = webdriver.Remote(
+        command_executor=f"http://{selenium_host}:4444/wd/hub",
+        options=chrome_options,
+        seleniumwire_options={"auto_config": False},
     )
     return driver
 
 
 def scrape_magazine(driver, config, checkpoint, temp_dir, cookie=None):
     edge_config = config["edge"]
-    url, username, password = edge_config["url"], edge_config["username"], edge_config["password"]
+    url, username, password = (
+        edge_config["url"],
+        edge_config["username"],
+        edge_config["password"],
+    )
 
     latest, date = is_latest(driver, url, checkpoint["edge"]["version"])
     if latest:
@@ -44,7 +51,7 @@ def scrape_magazine(driver, config, checkpoint, temp_dir, cookie=None):
     file_name = f"Edge Magazine - {date}.pdf"
     output_file = os.path.join(temp_dir, file_name)
     create_pdf_from_images(temp_dir, output_file, total_pages)
-    
+
     logger.info(f"PDF file created at: {output_file}")
     return output_file, date, file_name
 

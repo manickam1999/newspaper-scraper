@@ -1,7 +1,15 @@
 version: '3.8'
 
 services:
-  edge-converter:
+  chrome:
+    image: selenium/standalone-chrome
+    shm_size: '2gb'
+    ports:
+      - "4444:4444"
+    environment:
+      - TZ=Asia/Kuala_Lumpur
+
+  app:
     build: .
     volumes:
       - ./config:/app/config
@@ -10,6 +18,21 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - PYTHONUNBUFFERED=1
       - TZ=Asia/Kuala_Lumpur
-    restart: always
+      - SELENIUM_HOST=chrome
+    depends_on:
+      - chrome
+    command: |
+      bash -c '
+        apt-get update && apt-get install -y cron
+        # Create log file and set permissions
+        touch /var/log/cron.log
+        chmod 0644 /var/log/cron.log
+        
+        echo "0 6 * * * cd /app && python main.py --mode=star >> /var/log/cron.log 2>&1" > /etc/cron.d/scraper
+        chmod 0644 /etc/cron.d/scraper
+        crontab /etc/cron.d/scraper
+        service cron start
+        (sleep 5 && cd /app && python main.py --mode=star >> /var/log/cron.log 2>&1) &
+        tail -f /var/log/cron.log
+      '

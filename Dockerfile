@@ -1,6 +1,8 @@
-FROM python:3.9-slim
+FROM python:3.11
 
-# Install system dependencies
+WORKDIR /app
+
+# Install system dependencies including OCRmyPDF
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-eng \
@@ -9,39 +11,17 @@ RUN apt-get update && apt-get install -y \
     ghostscript \
     libmagic1 \
     poppler-utils \
-    cron \
     && rm -rf /var/lib/apt/lists/*
 
-# Set environment variables for Chrome
-ENV CHROME_BIN=/usr/bin/chromium
-ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
-ENV SELENIUM_HEADLESS=1
-ENV PYTHONUNBUFFERED=1
-
-# Create and set working directory
-WORKDIR /app
-
-# Copy requirements first to leverage Docker cache
+# Copy requirements first for better caching
 COPY requirements.txt .
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir ocrmypdf
-
-# Copy application code
-COPY . .
+RUN pip install -r requirements.txt
 
 # Create directories for mounted volumes
 RUN mkdir -p /app/config /app/credentials /app/checkpoint
 
+# Copy application code
+COPY . .
+
 # Set volume mount points
 VOLUME ["/app/config", "/app/credentials", "/app/checkpoint"]
-
-# Make run script executable
-RUN chmod +x run.sh
-
-# Create log file for cron
-RUN touch /var/log/cron.log
-
-# Run the script
-CMD ["/app/run.sh"]
