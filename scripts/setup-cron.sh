@@ -26,8 +26,9 @@ setup_cron() {
     apt-get update && apt-get install -y cron
 
     log_message "Configuring cron jobs..."
-    echo "0 6 * * * cd /app && python main.py --mode=star >> /var/log/cron.log 2>&1
-0 6 * * * cd /app && python main.py --mode=sun >> /var/log/cron.log 2>&1" > /etc/cron.d/scraper
+    echo "0 4 * * * cd /app && python main.py --mode=edge >> /var/log/cron.log 2>&1
+15 4 * * * cd /app && python main.py --mode=star >> /var/log/cron.log 2>&1
+30 4 * * * cd /app && python main.py --mode=sun >> /var/log/cron.log 2>&1" > /etc/cron.d/scraper
     chmod 0644 /etc/cron.d/scraper
     crontab /etc/cron.d/scraper
 }
