@@ -16,15 +16,14 @@ def handle_drive_upload(config, file_path, file_name, mode="edge", date=None):
     elif mode == "sun":
         folder_name = drive_config.get("sun_folder")
 
-
     drive_service = get_google_drive_service(service_account_file)
     root_folder_id = find_or_create_folder(drive_service, folder_name)
-    
+
     if mode == "star" and date:
         folder_id = find_or_create_folder(drive_service, date, root_folder_id)
     else:
         folder_id = root_folder_id
-        
+
     file_id, drive_link = upload_to_drive(
         drive_service, file_path, file_name, folder_id
     )
@@ -86,4 +85,6 @@ def set_file_permissions(service, file_id, email_list):
     for email in email_list:
         logger.info(f"Setting permission for email: {email}")
         permission = {"type": "user", "role": "reader", "emailAddress": email}
-        service.permissions().create(fileId=file_id, body=permission).execute()
+        service.permissions().create(
+            fileId=file_id, body=permission, sendNotificationEmail=False
+        ).execute()
