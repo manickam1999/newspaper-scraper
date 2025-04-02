@@ -32,11 +32,10 @@ PYTHONPATH=/app
 SHELL=/bin/bash
 
 # Scraper jobs
-0 4 * * * cd /app && /usr/local/bin/python main.py --mode=edge 2>&1 | ts '[%Y-%m-%d %H:%M:%S]' >> /var/log/cron.log
-15 4 * * * cd /app && /usr/local/bin/python main.py --mode=star 2>&1 | ts '[%Y-%m-%d %H:%M:%S]' >> /var/log/cron.log
-30 4 * * * cd /app && /usr/local/bin/python main.py --mode=sun 2>&1 | ts '[%Y-%m-%d %H:%M:%S]' >> /var/log/cron.log" > /etc/cron.d/scraper
+0 4 * * * root cd /app && /usr/local/bin/python main.py --mode=edge 2>&1 | ts '[%Y-%m-%d %H:%M:%S]' >> /var/log/cron.log
+15 4 * * * root cd /app && /usr/local/bin/python main.py --mode=star 2>&1 | ts '[%Y-%m-%d %H:%M:%S]' >> /var/log/cron.log
+30 4 * * * root cd /app && /usr/local/bin/python main.py --mode=sun 2>&1 | ts '[%Y-%m-%d %H:%M:%S]' >> /var/log/cron.log" > /etc/cron.d/scraper
     chmod 0644 /etc/cron.d/scraper
-    crontab /etc/cron.d/scraper
 }
 
 # Start cron service
