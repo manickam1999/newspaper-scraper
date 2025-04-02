@@ -10,14 +10,14 @@ def handle_email(config, drive_link, date, mode="edge"):
     sender_email = email_config["sender_email"]
     sender_password = email_config["sender_password"]
     receiver_emails = email_config["receiver_emails"]
-    
-    if mode=="star":
+
+    if mode == "star":
         subject = f"The Star Newspaper PDFs - {date}"
         body = f"Please find the link to today's Star newspaper PDFs below:\n\n{drive_link}"
-    elif mode=="sun":
+    elif mode == "sun":
         subject = f"The Sun PDF - {date}"
         body = f"Please find the link to the latest The Sun Newspaper PDF below:\n\n{drive_link}"
-    elif mode=="edge":
+    elif mode == "edge":
         subject = email_config.get("subject", f"Edge Magazine PDF - {date}")
         body = (
             email_config.get(
@@ -35,7 +35,8 @@ def send_email(sender_email, sender_password, receiver_emails, subject, body):
     logger.info(f"Sending email to: {', '.join(receiver_emails)}")
     msg = MIMEMultipart()
     msg["From"] = sender_email
-    msg["To"] = ", ".join(receiver_emails)
+    msg["To"] = sender_email
+    msg["Bcc"] = ", ".join(receiver_emails)
     msg["Subject"] = subject
 
     msg.attach(MIMEText(body, "plain"))
