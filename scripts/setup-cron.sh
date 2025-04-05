@@ -13,6 +13,15 @@ log_message() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
+# Setup Chrome profile directory with correct permissions
+setup_chrome_profile() {
+    log_message "Setting up Chrome profile directory..."
+    mkdir -p /home/seluser/chrome-profile
+    chown -R 1200:1200 /home/seluser/chrome-profile
+    chmod -R 755 /home/seluser/chrome-profile
+    log_message "Chrome profile directory setup complete"
+}
+
 # Setup log file
 setup_logging() {
     log_message "Setting up log file..."
@@ -79,6 +88,7 @@ run_sequential() {
 main() {
     log_message "Starting setup..."
     setup_logging
+    setup_chrome_profile
     # Uncomment below for cron setup
     setup_cron
     start_services
