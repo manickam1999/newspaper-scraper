@@ -6,6 +6,8 @@ services:
     shm_size: '2gb'
     ports:
       - "4444:4444"
+    volumes:
+      - ./chrome-profile:/home/seluser/chrome-profile
     environment:
       - TZ=Asia/Kuala_Lumpur
 
@@ -15,8 +17,6 @@ services:
       - ./config:/app/config
       - ./credentials:/app/credentials
       - ./checkpoint:/app/checkpoint
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
     environment:
       - TZ=Asia/Kuala_Lumpur
       - SELENIUM_HOST=chrome
