@@ -12,7 +12,7 @@ from selenium.webdriver.chrome.options import Options
 
 def setup_driver():
     chrome_options = Options()
-    chrome_options.add_argument("--headless")
+    # chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
@@ -30,7 +30,9 @@ def scrape_magazine(driver, config, checkpoint, temp_dir):
     edge_config = config["edge"]
     url, username, password = edge_config["url"], edge_config["username"], edge_config["password"]
 
-    latest, date = is_latest(driver, url, checkpoint["version"])
+    if "edge" not in checkpoint:
+        checkpoint["edge"] = {"version": None}
+    latest, date = is_latest(driver, url, checkpoint["edge"]["version"])
     if latest:
         logger.info("Exiting script as the latest version is already published")
         return None, None, None

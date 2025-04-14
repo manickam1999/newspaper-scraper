@@ -73,4 +73,5 @@ def set_file_permissions(service, file_id, email_list):
     for email in email_list:
         logger.info(f"Setting permission for email: {email}")
         permission = {"type": "user", "role": "reader", "emailAddress": email}
-        service.permissions().create(fileId=file_id, body=permission).execute()
+        service.permissions().create(fileId=file_id, body=permission, sendNotificationEmail=False).execute()
+        

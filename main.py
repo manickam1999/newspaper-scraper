@@ -47,7 +47,9 @@ def main():
 
             handle_email(config, drive_link, date)
 
-            checkpoint["version"] = date
+            if "edge" not in checkpoint:
+                checkpoint["edge"] = {}
+            checkpoint["edge"]["version"] = date
             save_checkpoint(checkpoint)
         else:
             logger.error(f"Output file not found: {output_file}")

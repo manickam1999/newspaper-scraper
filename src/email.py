@@ -27,7 +27,8 @@ def send_email(sender_email, sender_password, receiver_emails, subject, body):
     logger.info(f"Sending email to: {', '.join(receiver_emails)}")
     msg = MIMEMultipart()
     msg["From"] = sender_email
-    msg["To"] = ", ".join(receiver_emails)
+    msg["To"] = sender_email
+    msg["Bcc"] = ", ".join(receiver_emails)
     msg["Subject"] = subject
 
     msg.attach(MIMEText(body, "plain"))
