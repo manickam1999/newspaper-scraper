@@ -53,48 +53,79 @@ start_services() {
     service cron start
 }
 
-# Run scrapers sequentially
-run_sequential() {
-    sleep 20
-    log_message "Starting sequential run..."
+get_sleep_seconds() {
+    # Get current timestamp in seconds.
+    now=$(date +%s)
     
-    # Run Star scraper first
-    log_message "Running Star scraper..."
-    cd /app && /usr/local/bin/python main.py --mode=star 2>&1 | tee -a /var/log/cron.log
+    # Calculate today's 5AM timestamp.
+    target=$(date -d "today 05:00" +%s)
     
-    # Check if Star scraper completed successfully
-    if [ $? -eq 0 ]; then
-        log_message "Star scraper completed successfully"
-        
-        # Run Sun scraper
-        log_message "Running Sun scraper..."
-        cd /app && /usr/local/bin/python main.py --mode=sun 2>&1 | tee -a /var/log/cron.log
-        
-        if [ $? -eq 0 ]; then
-            log_message "Sun scraper completed successfully"
-        else
-            log_message "Error: Sun scraper failed"
-            exit 1
-        fi
-    else
-        log_message "Error: Star scraper failed"
-        exit 1
+    # If we've passed today's 5AM, target tomorrow's 5AM.
+    if [ "$now" -ge "$target" ]; then
+        target=$(date -d "tomorrow 05:00" +%s)
     fi
     
-    log_message "Sequential run completed successfully"
+    # Calculate the number of seconds to sleep.
+    echo $(( target - now ))
+}
+
+# Run scrapers sequentially
+run_sequential() {
+    while true; do
+        log_message "Starting sequential run..."
+        
+        # Run Star scraper first.
+        log_message "Running Star scraper..."
+        cd /app && /usr/local/bin/python main.py --mode=star 2>&1 | tee -a /var/log/cron.log
+        
+        # Check if Star scraper completed successfully.
+        if [ $? -eq 0 ]; then
+            log_message "Star scraper completed successfully."
+            
+            # Run Sun scraper.
+            log_message "Running Sun scraper..."
+            cd /app && /usr/local/bin/python main.py --mode=sun 2>&1 | tee -a /var/log/cron.log
+            
+            if [ $? -eq 0 ]; then
+                log_message "Sun scraper completed successfully."
+            else
+                log_message "Error: Sun scraper failed."
+                exit 1
+            fi
+        else
+            log_message "Error: Star scraper failed."
+            exit 1
+        fi
+        
+        log_message "Sequential run completed successfully."
+        
+        # Sleep until the next 5AM for the following run.
+        # Since the scrapers started at 5AM, the next run will be the next day's 5AM.
+        # We recalculate sleep time from now.
+        now=$(date +%s)
+        target=$(date -d "tomorrow 05:00" +%s)
+        sleep_seconds=$(( target - now ))
+        log_message "Sleeping for ${sleep_seconds} seconds until next sequential run."
+        sleep "$sleep_seconds"
+    done
 }
 
 # Main execution
 main() {
     log_message "Starting setup..."
     setup_logging
-    setup_chrome_profile
+    # setup_chrome_profile
     # Uncomment below for cron setup
-    setup_cron
-    start_services
+    # setup_cron
+    # start_services
+
+    # Calculate and sleep until the upcoming 5AM MYT.
+    sleep_seconds=$(get_sleep_seconds)
+    log_message "Sleeping for ${sleep_seconds} seconds until next 5AM MYT."
+    sleep "$sleep_seconds"
     
     # Run sequential scraping instead
-    # run_sequential
+    run_sequential
     
     log_message "Setup complete. Tailing log file..."
     tail -f /var/log/cron.log
