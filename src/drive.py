@@ -9,7 +9,7 @@ def handle_drive_upload(config, file_path, file_name):
 
     drive_config = config.get("google_drive", {})
     service_account_file = drive_config.get("service_account_file")
-    folder_name = drive_config.get("folder_name")
+    folder_name = drive_config.get("edge_folder")
 
     drive_service = get_google_drive_service(service_account_file)
     folder_id = find_or_create_folder(drive_service, folder_name)
