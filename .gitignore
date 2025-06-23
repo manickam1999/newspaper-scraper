@@ -4,3 +4,4 @@ checkpoint.yaml
 *-service-acc.json
 *.pyc
 chrome-profile
+session/
