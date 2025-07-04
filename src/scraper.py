@@ -6,7 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from src.pages import create_pdf_from_images, fetch_images
 from utils.logger import logger
-from utils.cookies import CookieManager
+# Removed CookieManager - using direct login only
 from seleniumwire import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options
@@ -68,9 +68,7 @@ def setup_driver():
 def scrape_magazine(driver, config, checkpoint, temp_dir):
     edge_config = config["edge"]
     url, username, password = edge_config["url"], edge_config["username"], edge_config["password"]
-    
-    # Initialize cookie manager
-    cookie_manager = CookieManager()
+    config_cookie = edge_config.get("cookie")  # Get cookie for API calls only
     
     if "edge" not in checkpoint:
         checkpoint["edge"] = {"version": None}
@@ -81,8 +79,8 @@ def scrape_magazine(driver, config, checkpoint, temp_dir):
     
     formatted_date = datetime.strptime(date, "%d/%m/%Y").strftime("%Y%m%d")
     
-    # Try to authenticate using cookies first, fallback to manual login
-    authenticated = authenticate_with_cookies(driver, cookie_manager, url, username, password)
+    # Always login with username and password
+    authenticated = login_with_credentials(driver, url, username, password)
     if not authenticated:
         logger.error("Authentication failed")
         return None, None, None
@@ -91,7 +89,7 @@ def scrape_magazine(driver, config, checkpoint, temp_dir):
     zoom_url = get_zoom_url(driver)
 
     logger.info(f"Using temporary directory: {temp_dir}")
-    fetch_images(zoom_url, total_pages, temp_dir, formatted_date)
+    fetch_images(zoom_url, total_pages, temp_dir, formatted_date, config_cookie)
     file_name = f"Edge Magazine - {date}.pdf"
     output_file = os.path.join(temp_dir, file_name)
     create_pdf_from_images(temp_dir, output_file, total_pages)
@@ -111,56 +109,32 @@ def is_latest(driver, url, version):
     return False, date
 
 
-def authenticate_with_cookies(driver, cookie_manager, url, username, password):
-    """Try to authenticate using saved cookies, fallback to manual login"""
-    logger.info("Attempting authentication with cookie management")
-    
-    # First, navigate to the site
-    driver.get(url)
-    
-    # Try to load existing cookies
-    cookies_loaded = cookie_manager.load_cookies(driver, "edge")
-    
-    if cookies_loaded:
-        # Check if cookies are still valid
-        if cookie_manager.are_cookies_valid(driver):
-            logger.info("Authentication successful using saved cookies")
-            # Navigate to the paper section
-            try:
-                latest_paper = driver.find_element(By.CSS_SELECTOR, 'a[title="The Edge Malaysia"]')
-                latest_paper.click()
-                logger.info("Latest paper link clicked")
-                return True
-            except Exception as e:
-                logger.warning(f"Failed to navigate to paper section with cookies: {e}")
-                # Continue to manual login
-    
-    # Cookies didn't work, try manual login
-    logger.info("Cookies invalid or not found, performing manual login")
-    return login_and_save_cookies(driver, cookie_manager, username, password)
-
-def login_and_save_cookies(driver, cookie_manager, username, password):
-    """Perform manual login and save cookies for future use"""
+def login_with_credentials(driver, url, username, password):
+    """Simple login using username and password only"""
     try:
+        # Navigate to the site
+        driver.get(url)
+        logger.info("Navigated to Edge website")
+
         # Login Button
-        logger.info("Finding for login button")
+        logger.info("Finding login button")
         login_button = driver.find_element(By.CSS_SELECTOR, "a.vc_open_login.vc_nav_link")
         driver.execute_script("arguments[0].click();", login_button)
         logger.info("Login button clicked")
 
         # Login Form
-        logger.info("Finding for username field")
+        logger.info("Finding username field")
         username_field = WebDriverWait(driver, 10).until(
             EC.visibility_of_element_located((By.ID, "input_username"))
         )
         username_field.send_keys(username)
 
-        logger.info("Finding for password field")
+        logger.info("Finding password field")
         password_field = driver.find_element(By.ID, "input_password")
         password_field.send_keys(password)
 
         # Submit Button for login form
-        logger.info("Finding for submit button")
+        logger.info("Finding submit button")
         submit_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Login')]")
         submit_button.click()
         logger.info("Submit button clicked")
@@ -171,10 +145,6 @@ def login_and_save_cookies(driver, cookie_manager, username, password):
         )
         logger.info("Login confirmed by presence of logged-in user icon")
 
-        # Save cookies after successful login
-        cookie_manager.save_cookies(driver, "edge")
-        logger.info("Cookies saved after successful login")
-
         # Navigate to the paper section
         latest_paper = driver.find_element(By.CSS_SELECTOR, 'a[title="The Edge Malaysia"]')
         latest_paper.click()
@@ -183,13 +153,8 @@ def login_and_save_cookies(driver, cookie_manager, username, password):
         return True
         
     except Exception as e:
-        logger.error(f"Manual login failed: {e}")
+        logger.error(f"Login failed: {e}")
         return False
-
-def login(driver, username, password):
-    """Legacy login function for backward compatibility"""
-    cookie_manager = CookieManager()
-    return login_and_save_cookies(driver, cookie_manager, username, password)
 
 
 def enable_workstation(driver):

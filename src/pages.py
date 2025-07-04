@@ -3,9 +3,16 @@ import requests
 from PIL import Image
 from utils.logger import logger
 
-def fetch_images(zoom_url, total_pages, temp_dir, formatted_date, cookie=None):
+def fetch_images(zoom_url, total_pages, temp_dir, formatted_date, config_cookie=None):
     
-    cookie_string="JSESSIONID=B92E88392B6886B8440F88EBE9B88F27; vn=7FYPt42dJ8Q%3D; extvn=bNhDAnhWzF8%3D; JSESSIONID=FCD25F2D71B6C212FE9AD32307FC5D78; visid_incap_3130433=eLKboCzLQB2kzNBhLoVFnrKcWGgAAAAAQUIPAAAAAACAGwlmPS5JlJkZwVu4gWcF; nlbi_3130433=r1XaWJwpvXbEk7I7kANNcgAAAAA3SQKI3B1fKW0nTJq/hp4t; incap_ses_1673_3130433=ZGfea0MHH0gI4npc9LA3F7KcWGgAAAAAFSId5bRLnjYqsyXbFAA7Dg==; _ga=GA1.1.1539179138.1750637748; _gcl_au=1.1.1033607849.1750637748; vuidjson=FsQ10ex63%2FBh3DR2OYEuhGEt4ycDJC2YWCajSJDPU351CkuZRnltUrIcwBcd67l39t9w8vx%2B4CM%3D; workstationCookie=1750637772794; _ga_KESNC53HMR=GS2.1.s1750637747$o1$g1$t1750637781$j26$l0$h799963808"
+    # Use config cookie if provided, otherwise use fallback cookie
+    if config_cookie:
+        cookie_string = config_cookie
+        logger.info("Using cookie from config for API calls")
+    else:
+        # Fallback cookie if config cookie is not available
+        cookie_string="JSESSIONID=B92E88392B6886B8440F88EBE9B88F27; vn=7FYPt42dJ8Q%3D; extvn=bNhDAnhWzF8%3D; JSESSIONID=FCD25F2D71B6C212FE9AD32307FC5D78; visid_incap_3130433=eLKboCzLQB2kzNBhLoVFnrKcWGgAAAAAQUIPAAAAAACAGwlmPS5JlJkZwVu4gWcF; nlbi_3130433=r1XaWJwpvXbEk7I7kANNcgAAAAA3SQKI3B1fKW0nTJq/hp4t; incap_ses_1673_3130433=ZGfea0MHH0gI4npc9LA3F7KcWGgAAAAAFSId5bRLnjYqsyXbFAA7Dg==; _ga=GA1.1.1539179138.1750637748; _gcl_au=1.1.1033607849.1750637748; vuidjson=FsQ10ex63%2FBh3DR2OYEuhGEt4ycDJC2YWCajSJDPU351CkuZRnltUrIcwBcd67l39t9w8vx%2B4CM%3D; workstationCookie=1750637772794; _ga_KESNC53HMR=GS2.1.s1750637747$o1$g1$t1750637781$j26$l0$h799963808"
+        logger.info("Using fallback cookie for API calls")
 
 
     base_url = zoom_url.rsplit("Zoom-", 1)[0]
