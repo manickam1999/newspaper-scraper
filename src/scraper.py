@@ -13,18 +13,56 @@ from selenium.webdriver.chrome.options import Options
 
 def setup_driver():
     chrome_options = Options()
-    # chrome_options.add_argument("--headless")
+    
+    # Essential Chrome options for headless/server environments
+    chrome_options.add_argument("--headless")  # Enable headless mode
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--disable-software-rasterizer")
     chrome_options.add_argument("--window-size=1920x1080")
     chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_argument("--start-maximized")
+    chrome_options.add_argument("--disable-web-security")
+    chrome_options.add_argument("--disable-features=VizDisplayCompositor")
+    chrome_options.add_argument("--remote-debugging-port=9222")
+    chrome_options.add_argument("--disable-background-timer-throttling")
+    chrome_options.add_argument("--disable-backgrounding-occluded-windows")
+    chrome_options.add_argument("--disable-renderer-backgrounding")
+    chrome_options.add_argument("--disable-ipc-flooding-protection")
+    chrome_options.add_argument("--user-data-dir=/tmp/chrome-profile")
     
-    driver = webdriver.Chrome(
-        service=ChromeService(), options=chrome_options
-    )
-    return driver
+    # Explicitly set Chrome binary path
+    chrome_options.binary_location = "/usr/bin/google-chrome-stable"
+    
+    try:
+        # First try with webdriver-manager for compatible ChromeDriver
+        logger.info("Initializing Chrome driver with webdriver-manager")
+        from webdriver_manager.chrome import ChromeDriverManager
+        service = ChromeService(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+        logger.info("Chrome driver initialized successfully with webdriver-manager")
+        return driver
+    except ImportError:
+        logger.info("webdriver-manager not available, trying system ChromeDriver")
+        try:
+            service = ChromeService()
+            driver = webdriver.Chrome(service=service, options=chrome_options)
+            logger.info("Chrome driver initialized successfully with system ChromeDriver")
+            return driver
+        except Exception as e:
+            logger.error(f"Failed to initialize Chrome driver with system ChromeDriver: {e}")
+            raise e
+    except Exception as e:
+        logger.error(f"Failed to initialize Chrome driver with webdriver-manager: {e}")
+        logger.info("Trying system ChromeDriver as fallback")
+        try:
+            service = ChromeService()
+            driver = webdriver.Chrome(service=service, options=chrome_options)
+            logger.info("Chrome driver initialized successfully with system ChromeDriver")
+            return driver
+        except Exception as e2:
+            logger.error(f"Failed to initialize Chrome driver with system ChromeDriver: {e2}")
+            raise e2
 
 
 def scrape_magazine(driver, config, checkpoint, temp_dir):
