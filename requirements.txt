@@ -52,3 +52,5 @@ wsproto==1.2.0
 zstandard==0.23.0
 setuptools==75.2.0
 webdriver-manager==4.0.2
+APScheduler==3.10.4
+pytz==2024.1

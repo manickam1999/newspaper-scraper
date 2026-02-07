@@ -10,4 +10,6 @@ services:
       - ./session:/app/session
     environment:
       - PYTHONUNBUFFERED=1
-    restart: "no"
+      - TZ=Asia/Kuala_Lumpur
+      - RUN_ON_STARTUP=true
+    restart: unless-stopped

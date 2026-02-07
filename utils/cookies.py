@@ -150,7 +150,7 @@ class CookieManager:
         """Get information about current session state"""
         try:
             info = {"cookies_exist": os.path.exists(self.cookies_file)}
-            
+
             if info["cookies_exist"]:
                 with open(self.cookies_file, 'r') as f:
                     session_data = json.load(f)
@@ -161,12 +161,76 @@ class CookieManager:
                     "is_expired": self._are_cookies_expired(session_data),
                     "cookie_count": len(session_data.get("cookies", []))
                 })
-            
+
             if os.path.exists(self.session_state_file):
                 with open(self.session_state_file, 'r') as f:
                     info["session_state"] = json.load(f)
-            
+
             return info
         except Exception as e:
             logger.error(f"Failed to get session info: {e}")
             return {"error": str(e)}
+
+    def cookies_to_http_string(self, driver, domain_filter=None):
+        """
+        Convert Selenium cookies to HTTP cookie string format
+
+        Args:
+            driver: Selenium WebDriver instance
+            domain_filter: Optional domain filter (e.g., "theedgemalaysia.com")
+
+        Returns:
+            String in format "name1=value1; name2=value2; ..."
+        """
+        try:
+            cookies = driver.get_cookies()
+
+            # Filter by domain if specified
+            if domain_filter:
+                cookies = [c for c in cookies if domain_filter in c.get('domain', '')]
+
+            # Convert to HTTP format: "name=value; name2=value2"
+            cookie_pairs = [f"{c['name']}={c['value']}" for c in cookies]
+            http_cookie_string = "; ".join(cookie_pairs)
+
+            logger.info(f"Converted {len(cookie_pairs)} cookies to HTTP string format")
+            return http_cookie_string
+
+        except Exception as e:
+            logger.error(f"Failed to convert cookies to HTTP string: {e}")
+            return None
+
+    def update_config_cookie(self, http_cookie_string, config_file="config/config.yaml"):
+        """
+        Update the cookie field in config.yaml
+
+        Args:
+            http_cookie_string: Cookie string in HTTP format
+            config_file: Path to config.yaml file
+
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            import yaml
+
+            # Read current config
+            with open(config_file, 'r') as f:
+                config = yaml.safe_load(f)
+
+            # Update edge cookie
+            if 'edge' not in config:
+                config['edge'] = {}
+
+            config['edge']['cookie'] = http_cookie_string
+
+            # Write back to file
+            with open(config_file, 'w') as f:
+                yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+
+            logger.info(f"Updated config cookie in {config_file}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to update config cookie: {e}")
+            return False

@@ -9,7 +9,12 @@ RUN apt-get update && apt-get install -y \
     ghostscript \
     libmagic1 \
     poppler-utils \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
+
+# Set timezone
+ENV TZ=Asia/Kuala_Lumpur
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Set environment variables for Chrome
 ENV CHROME_BIN=/usr/bin/chromium
@@ -31,7 +36,7 @@ RUN pip install --no-cache-dir ocrmypdf
 COPY . .
 
 # Create directories for mounted volumes
-RUN mkdir -p /app/config /app/credentials /app/checkpoint
+RUN mkdir -p /app/config /app/credentials /app/checkpoint /app/session
 
 # Set volume mount points
 VOLUME ["/app/config", "/app/credentials", "/app/checkpoint"]

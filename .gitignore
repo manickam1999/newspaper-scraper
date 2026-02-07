@@ -5,3 +5,4 @@ checkpoint.yaml
 *.pyc
 chrome-profile
 session/
+debug/
